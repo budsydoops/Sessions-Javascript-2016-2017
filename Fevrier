@@ -1,0 +1,272 @@
+function preload() {
+
+    game.load.baseURL = 'http://examples.phaser.io/assets/';
+    game.load.crossOrigin = 'anonymous';
+
+    game.load.image('phaser', 'sprites/phaser-dude.png');
+    game.load.image('orb', 'sprites/orb-red.png');
+    var wall = ['11111111','11111111','11111111','11111111','11111111','11111111','11111111','11111111'];
+    game.create.texture('wall',wall,6,6,0);
+    
+    var couleurButton = [
+	'................',
+	'................',
+	'................',
+	'................',
+	'.....DDDD.......',
+	'.....DCCD.......',
+	'.....DCCD.......',
+	'.....DDDD.......',
+	'................',
+	'................',
+	'................',
+	'................',
+	'................',
+	'................',
+	'................',
+	'................'
+    ];
+    game.create.texture('couleurButton', couleurButton, 10, 10, 0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var triggers;
+var walls;
+var jump = -400;
+var scoreText;
+var score = 0;
+var orb;
+var arrows; 
+var sprite;
+var speed = 80;
+var gameoverText;
+var upKey;
+var leftKey;
+var rightKey;
+var button;
+
+function create() {
+    game.physics.startSystem(Phaser.Physics.Arcade);
+    game.physics.arcade.gravity.y = 980;
+    
+    scoreText = game.add.text(20,100,"score:"+score, {fill: "#FFFFFF",font:"16px Arial",align:"center"});
+    game.stage.backgroundColor = "#FF0000";
+
+    orb = game.add.sprite (300, 75, 'orb');
+    game.physics.arcade.enable(orb);
+    orb.body.allowGravity = false;
+    orb.anchor.setTo(0.5, 0.5);
+    
+    sprite = game.add.sprite(300, 300, 'phaser');
+    game.physics.arcade.enable(sprite);
+    sprite.body.collideWorldBounds = true;
+    
+    //arrows = game.input.keyboard.createCursorKeys();
+    
+    sprite.isCrossing = false;
+    sprite.hasCrossed = false;
+    
+    upKey = game.input.keyboard.addKey(Phaser.Keyboard.UP);
+    leftKey = game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
+    rightKey = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+    
+    walls = game.add.group();
+    walls.add(game.add.tileSprite(1050,0,100,300,'wall'));
+    walls.add(game.add.tileSprite(1050,500,100,100,'wall'));
+    walls.add(game.add.tileSprite(1400,0,100,100,'wall'));
+    walls.add(game.add.tileSprite(1400,300,100,600,'wall'));
+    walls.add(game.add.tileSprite(1750,0,100,100,'wall'));
+    walls.add(game.add.tileSprite(1750,400,100,600,'wall'));
+    
+    game.physics.arcade.enable(walls);
+    walls.setAll('body.allowGravity',false);
+    walls.setAll('body.collideWorldBounds',false);
+    
+    triggers = game.add.group();
+    triggers.add(game.add.sprite(1050,300,null));
+    triggers.add(game.add.sprite(1400,100,null));
+    triggers.add(game.add.sprite(1750,200,null));
+    
+    game.physics.arcade.enable(triggers);
+    triggers.setAll('body.allowGravity',false);
+    triggers.setAll('body.collideWorldBounds',false);
+    
+    triggers.forEach(giveSize);
+    gameoverText = game.add.text(233,233,"", {fill: "#FFFFFF",font:"64px Arial",align:"center"});
+    
+}
+
+
+function giveSize(item)
+{
+    item.body.setSize(100,200);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var gameover = false;
+
+function update()  
+{
+    if(!gameover)
+    {   
+        checkKeys();
+    
+        //animateOrb(orb,100);
+    
+        sprite.hasCrossed = true;
+        
+        game.physics.arcade.overlap (sprite,orb,miam,null,this);
+        game.physics.arcade.collide(sprite,walls,paf);
+        game.physics.arcade.overlap(sprite,triggers,reset);
+        
+        walls.forEach(moveWalls);
+        triggers.forEach(moveWalls);
+        
+        if(sprite.isCrossing && sprite.hasCrossed){
+            score = score+1;
+            scoreText.text = "score:"+score;
+            sprite.isCrossing = false;
+            sprite.hasCrossed = false;
+        }
+    }else{
+        gameoverText.text = "Game Over";
+        button = game.add.button(80,233,'couleurButton',rejouer,this,2,1,0);
+    }
+}
+
+function miam(a,b)
+{
+    var newx = game.rnd.integerInRange(50,750);
+    var newy = game.rnd.integerInRange(50,500);
+    b.reset(newx,newy);
+    score = score + 1;
+    scoreText.text = "score:"+score; 
+}
+
+function animateOrb (myOrb,speedOrb)
+{
+    myOrb.body.angularVelocity = speedOrb;
+}
+
+function checkKeys()
+{
+    sprite.body.velocity.x = 0;
+    if(upKey.isDown){
+        sprite.body.velocity.y = jump;
+    }
+    
+    if(leftKey.isDown){
+        sprite.body.velocity.x = -100;
+    }
+    
+    if(rightKey.isDown){
+        sprite.body.velocity.x = 200;
+    }
+}
+
+function moveWalls(item)
+{  
+    item.body.velocity.x =-100;
+
+    if(item.x<=-100)
+    {
+        item.x = 1050;
+    }
+}
+
+function paf (sprite,wall)
+{
+    gameover = true;
+
+    orb.destroy();
+    sprite.destroy();
+    walls.destroy();
+}
+
+function reset (sprite, trigger)
+{
+   //isCrossing = true;
+   sprite.isCrossing = true;
+   sprite.hasCrossed = false;
+
+}
+
+function rejouer (){
+ gameover = false;
+ game.world.removeAll();
+ create();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+function render() {
+    //game.debug.body(orb);
+    //game.debug.body(sprite);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
